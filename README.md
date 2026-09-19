@@ -1,7 +1,7 @@
 # Voxolith Viewer
 
 A MagicaVoxel-style browser viewer for `.vox` models and Minecraft `.mca` regions, rendered
-with [`@voxolith/render`](https://github.com/voxolith/render) (WebGPU).
+with [`@voxolith/renderer`](https://github.com/voxolith/renderer) (WebGPU).
 
 - Drop or open a `.vox`, or pick a bundled sample
 - Drag to orbit, wheel to zoom; shows dimensions, voxel count and the palette in use
@@ -45,7 +45,7 @@ Headless bun scripts in `tools/`:
 
 ## Local development with the engine
 
-This repo depends on `@voxolith/render` as `workspace:*`. Clone it next to this one and run
+This repo depends on `@voxolith/renderer` as `workspace:*`. Clone it next to this one and run
 `bun install` from a workspace root that lists both folders, so the engine resolves to the local
 checkout. Once the engine is on npm, swap the dependency to a version range.
 

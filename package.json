@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "A browser MagicaVoxel .vox and Minecraft .mca viewer rendered with @voxolith/render",
+  "description": "A browser MagicaVoxel .vox and Minecraft .mca viewer rendered with @voxolith/renderer",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -20,7 +20,7 @@
     "render:vox": "bun tools/render-vox.ts"
   },
   "dependencies": {
-    "@voxolith/render": "workspace:*"
+    "@voxolith/renderer": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",

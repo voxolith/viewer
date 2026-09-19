@@ -1,9 +1,9 @@
-// Turns a parsed .vox model into something the @voxolith/render engine can render: crop to
+// Turns a parsed .vox model into something the @voxolith/renderer engine can render: crop to
 // the occupied bounding box (so world-baked models frame nicely), convert the
 // MagicaVoxel Z-up axis to the engine's Y-up, and copy the file palette so the
 // rendered colours match the source.
 
-import type { VoxModel, Vec3 } from "@voxolith/render";
+import type { VoxModel, Vec3 } from "@voxolith/renderer";
 
 export interface ViewModel {
   /** Engine grid size (cropped + Y-up). */

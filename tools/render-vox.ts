@@ -7,7 +7,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { deflateSync } from "node:zlib";
-import { parseVox } from "@voxolith/render/vox";
+import { parseVox } from "@voxolith/renderer/vox";
 
 const [, , inPath, outPath, yawArg, pitchArg, widthArg] = process.argv;
 if (!inPath || !outPath) {

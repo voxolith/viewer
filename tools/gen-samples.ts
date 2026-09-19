@@ -9,7 +9,7 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { writeVox } from "@voxolith/render/vox";
+import { writeVox } from "@voxolith/renderer/vox";
 
 // Palette (1-based).
 const C = {

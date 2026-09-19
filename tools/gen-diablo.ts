@@ -10,7 +10,7 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { writeVox } from "@voxolith/render/vox";
+import { writeVox } from "@voxolith/renderer/vox";
 
 const C = {
   body: 1, seam: 2, trim: 3, glass: 4, tire: 5, hub: 6,

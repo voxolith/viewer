@@ -1,5 +1,5 @@
 // Voxolith Viewer — a MagicaVoxel-style browser .vox viewer rendered with the
-// @voxolith/render engine. Drop or open a .vox (or pick a bundled sample), orbit with drag, zoom
+// @voxolith/renderer engine. Drop or open a .vox (or pick a bundled sample), orbit with drag, zoom
 // with the wheel. Shows model dimensions, voxel count, and the palette in use.
 
 import "./styles.css";
@@ -23,7 +23,7 @@ import {
   makeMuzzleFlash,
   type VoxEffect,
   type Vec3,
-} from "@voxolith/render";
+} from "@voxolith/renderer";
 import { makeOrbitView } from "./orbitView";
 import { toViewModel, framing, type ViewModel } from "./viewer";
 
@@ -93,7 +93,7 @@ async function main() {
 
   hud.innerHTML = `
     <div class="panel vv-toolbar">
-      <div class="vv-title">Voxolith Viewer <small>· @voxolith/render</small></div>
+      <div class="vv-title">Voxolith Viewer <small>· @voxolith/renderer</small></div>
       <div class="vv-seg">
         <button class="vv-seg-btn active" id="vv-mode-model">Model</button>
         <button class="vv-seg-btn" id="vv-mode-fx">Particles</button>
