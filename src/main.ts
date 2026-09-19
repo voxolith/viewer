@@ -442,7 +442,7 @@ async function main() {
   const loadFile = (file: File) =>
     file.arrayBuffer().then((b) => loadBuffer(b, file.name));
   const loadSample = async (file: string) => {
-    const res = await fetch(`/samples/${file}`);
+    const res = await fetch(`${import.meta.env.BASE_URL}samples/${file}`);
     if (!res.ok) return showError(`${file}: ${res.status}`);
     loadBuffer(await res.arrayBuffer(), file);
   };
