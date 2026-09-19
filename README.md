@@ -39,9 +39,14 @@ renders on demand: a static model only redraws when you orbit, zoom, load or res
 resolution adapts to the frame time while you interact (add `?perf` to the URL for the overlay,
 which also names the WebGPU adapter).
 
-If the viewer is slow on a machine with a capable GPU, check the adapter: the viewer shows a
-warning when the browser hands it a software (CPU) WebGPU implementation. On Linux Chrome look at
-`chrome://gpu` under WebGPU and enable Vulkan via `chrome://flags/#enable-vulkan`.
+If the viewer is slow on a machine with a capable GPU, check two things:
+
+- The viewer shows a warning when the browser hands it a software (CPU) WebGPU adapter.
+- **Linux Chrome with an AMD or Intel GPU**: if `chrome://gpu` lists
+  `Disabled Features: webgpu_on_vk_via_gl_interop`, Chrome composites through OpenGL and copies
+  every WebGPU frame the slow way. Enable `chrome://flags/#enable-vulkan` (and
+  `#enable-unsafe-webgpu`), restart, and confirm `chrome://gpu` shows Vulkan enabled and WebGPU
+  hardware accelerated. This alone took a Radeon 890M from a crawl to smooth.
 
 ## Samples
 
