@@ -1,0 +1,32 @@
+{
+  "name": "@voxolith/viewer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A browser MagicaVoxel .vox and Minecraft .mca viewer rendered with @voxolith/render",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voxolith/viewer.git"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "gen:samples": "bun tools/gen-samples.ts",
+    "gen:testarossa": "bun tools/gen-testarossa.ts",
+    "gen:diablo": "bun tools/gen-diablo.ts",
+    "render:vox": "bun tools/render-vox.ts"
+  },
+  "dependencies": {
+    "@voxolith/render": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "@webgpu/types": "^0.1.74",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  }
+}

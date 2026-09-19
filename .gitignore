@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.local
+.DS_Store
+.idea/
+bun.lock
+# Regenerate with `bun run gen:samples`; too large for the repo.
+public/samples/landscape-xl.vox
+# Drop any Minecraft region file here to try the .mca sample.
+public/samples/r.0.0.mca
