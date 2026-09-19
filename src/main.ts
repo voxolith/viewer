@@ -26,6 +26,10 @@ import {
 } from "@voxolith/renderer";
 import { makeOrbitView } from "./orbitView";
 import { toViewModel, framing, type ViewModel } from "./viewer";
+import { initTheme } from "./brand/theme";
+
+const BASE = import.meta.env.BASE_URL;
+const MARK = `<img src="${BASE}brand/logo-mark.svg" alt="" width="72" height="72">`;
 
 // Cyclable particle effects for Particles mode.
 const EFFECTS: { name: string; make: () => VoxEffect }[] = [
@@ -79,13 +83,15 @@ async function main() {
   const canvas = document.getElementById("scene") as HTMLCanvasElement | null;
   const hud = document.getElementById("hud");
   if (!canvas || !hud) throw new Error("Missing #scene / #hud");
+  // Apply ?theme= / the stored theme now so even the unsupported card is themed.
+  initTheme();
 
   let gpu;
   try {
     gpu = await initGpu(canvas);
   } catch (err) {
     if (err instanceof WebGPUUnsupportedError) {
-      showUnsupportedScreen(err.message, { appName: "Voxolith Viewer", emoji: "🧊" });
+      showUnsupportedScreen(err.message, { appName: "Voxolith Viewer", iconHtml: MARK });
       return;
     }
     throw err;
@@ -93,7 +99,7 @@ async function main() {
 
   hud.innerHTML = `
     <div class="panel vv-toolbar">
-      <div class="vv-title">Voxolith Viewer <small>· @voxolith/renderer</small></div>
+      <a class="brand" href="https://github.com/voxolith" target="_blank" rel="noopener"><img src="${BASE}brand/logo-mark.svg" alt=""> voxolith <small>Viewer</small></a>
       <div class="vv-seg">
         <button class="vv-seg-btn active" id="vv-mode-model">Model</button>
         <button class="vv-seg-btn" id="vv-mode-fx">Particles</button>
@@ -124,11 +130,13 @@ async function main() {
         <button class="vv-btn" id="vv-fx-next">▶</button>
       </span>
       <input type="file" id="vv-file" accept=".vox,.mca" hidden />
+      <button class="theme-toggle" id="vv-theme" type="button"></button>
     </div>
     <div class="panel vv-info" id="vv-info" hidden></div>
     <div class="panel vv-palette" id="vv-palette" hidden></div>
     <div class="vv-hint" id="vv-hint"><div>Drop a <b>.vox</b> file here<br>or use <b>Open</b> / the sample list</div></div>`;
 
+  initTheme(hud.querySelector("#vv-theme"));
   const infoEl = hud.querySelector("#vv-info") as HTMLElement;
   const paletteEl = hud.querySelector("#vv-palette") as HTMLElement;
   const hintEl = hud.querySelector("#vv-hint") as HTMLElement;
@@ -338,7 +346,7 @@ async function main() {
 
   function showError(msg: string) {
     infoEl.hidden = false;
-    infoEl.innerHTML = `<div class="name" style="color:#ff8d8d">Failed to load</div><div class="row"><span>${msg}</span></div>`;
+    infoEl.innerHTML = `<div class="name" style="color:var(--danger)">Failed to load</div><div class="row"><span>${msg}</span></div>`;
   }
 
   // --- Particles mode -------------------------------------------------------
@@ -522,6 +530,6 @@ main().catch((err) => {
   console.error(err);
   showUnsupportedScreen("An unexpected error occurred while starting up.", {
     appName: "Voxolith Viewer",
-    emoji: "🧊",
+    iconHtml: MARK,
   });
 });

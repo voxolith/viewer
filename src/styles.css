@@ -1,3 +1,5 @@
+@import "./brand/tokens.css";
+
 * {
   box-sizing: border-box;
 }
@@ -5,10 +7,10 @@ html,
 body {
   margin: 0;
   height: 100%;
-  background: #16181d;
+  background: var(--bg);
   overflow: hidden;
   font: 13px/1.45 system-ui, sans-serif;
-  color: #d7dae0;
+  color: var(--text);
 }
 #app {
   position: fixed;
@@ -38,11 +40,11 @@ body {
   display: flex;
   gap: 8px;
   align-items: center;
-  background: rgba(28, 31, 38, 0.92);
-  border: 1px solid #2e323b;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 8px 10px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow);
 }
 .vv-title {
   font-weight: 700;
@@ -51,13 +53,13 @@ body {
 }
 .vv-title small {
   font-weight: 400;
-  color: #8b909b;
+  color: var(--text-muted);
 }
 .vv-btn,
 .vv-select {
-  background: #2b2f38;
-  color: #e6e9ee;
-  border: 1px solid #3a3f4a;
+  background: var(--control);
+  color: var(--text);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 6px 10px;
   font: inherit;
@@ -65,29 +67,29 @@ body {
 }
 .vv-btn:hover,
 .vv-select:hover {
-  background: #343945;
+  background: var(--control-hover);
 }
 
 .vv-seg {
   display: inline-flex;
-  border: 1px solid #3a3f4a;
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
 }
 .vv-seg-btn {
-  background: #2b2f38;
-  color: #b9bec9;
+  background: var(--control);
+  color: var(--text-muted);
   border: 0;
   padding: 6px 12px;
   font: inherit;
   cursor: pointer;
 }
 .vv-seg-btn + .vv-seg-btn {
-  border-left: 1px solid #3a3f4a;
+  border-left: 1px solid var(--border);
 }
 .vv-seg-btn.active {
-  background: #4d78ff;
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 #vv-model-ctrls,
 #vv-fx-ctrls {
@@ -101,14 +103,14 @@ body {
   font-weight: 600;
 }
 .vv-fps {
-  color: #9aa0ab;
+  color: var(--text-muted);
   font-size: 12px;
 }
 .vv-fps input {
   width: 44px;
-  background: #2b2f38;
-  color: #e6e9ee;
-  border: 1px solid #3a3f4a;
+  background: var(--control);
+  color: var(--text);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 4px 6px;
   font: inherit;
@@ -119,16 +121,16 @@ body {
   top: 12px;
   right: 12px;
   min-width: 150px;
-  background: rgba(28, 31, 38, 0.92);
-  border: 1px solid #2e323b;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 12px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow);
 }
 .vv-info h3 {
   margin: 0 0 6px;
   font-size: 12px;
-  color: #9aa0ab;
+  color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -139,10 +141,10 @@ body {
   gap: 16px;
 }
 .vv-info .row span:first-child {
-  color: #8b909b;
+  color: var(--text-muted);
 }
 .vv-info .name {
-  color: #e6e9ee;
+  color: var(--text);
   font-weight: 600;
   word-break: break-all;
   margin-bottom: 6px;
@@ -156,11 +158,11 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 3px;
-  background: rgba(28, 31, 38, 0.92);
-  border: 1px solid #2e323b;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 8px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow);
 }
 .vv-swatch {
   width: 16px;
@@ -174,17 +176,17 @@ body {
   inset: 0;
   display: grid;
   place-items: center;
-  color: #6c727d;
+  color: var(--text-faint);
   font-size: 15px;
 }
 .vv-hint div {
   text-align: center;
-  border: 2px dashed #353a44;
+  border: 2px dashed var(--border);
   border-radius: 14px;
   padding: 28px 36px;
 }
 .vv-drop #app {
-  outline: 3px dashed #5b76ff;
+  outline: 3px dashed var(--drop);
   outline-offset: -8px;
 }
 
@@ -193,8 +195,8 @@ body {
   inset: 0;
   display: grid;
   place-items: center;
-  background: #16181d;
-  color: #d7dae0;
+  background: var(--bg);
+  color: var(--text);
 }
 .unsupported-card {
   text-align: center;
@@ -203,4 +205,22 @@ body {
 }
 .unsupported-emoji {
   font-size: 48px;
+}
+
+/* Brand icon on the unsupported-browser card */
+.unsupported-icon img,
+.unsupported-icon svg {
+  width: 72px;
+  height: 72px;
+}
+.unsupported h1 {
+  color: var(--text);
+}
+.unsupported-hint {
+  color: var(--text-muted);
+}
+
+/* Author display rules above must not defeat the hidden attribute. */
+[hidden] {
+  display: none !important;
 }

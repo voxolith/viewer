@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/voxolith/.github/main/profile/lockup-dark.svg">
+    <img alt="Voxolith — WebGPU voxel engine" src="https://raw.githubusercontent.com/voxolith/.github/main/profile/lockup.svg" width="420">
+  </picture>
+</p>
+
 # Voxolith Viewer
 
 A MagicaVoxel-style browser viewer for `.vox` models and Minecraft `.mca` regions, rendered
@@ -55,6 +62,13 @@ Every push to `main` builds the app and publishes it to GitHub Pages at
 <https://voxolith.github.io/viewer/> via `.github/workflows/pages.yml`. The workflow checks out
 `voxolith/renderer` next to the app and builds with `BASE_PATH=/viewer/`, so asset and fetch URLs
 resolve under the project path. Run the same locally with `BASE_PATH=/viewer/ bun run build`.
+
+## Theming
+
+The UI uses the Voxolith design tokens in `src/brand/tokens.css` (dark navy by default, a paper
+light theme via `prefers-color-scheme` or the toolbar toggle, persisted in `localStorage`). Those
+files and the favicons are generated from the private `voxolith/branding` repo; edit them there
+and re-run its sync script rather than here.
 
 ## License
 
