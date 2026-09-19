@@ -31,6 +31,18 @@ bun run dev
 Open the printed `https://localhost:5173` URL and accept the self-signed certificate. WebGPU needs a
 secure context, which the `@vitejs/plugin-basic-ssl` plugin provides on localhost and LAN.
 
+## Performance
+
+The toolbar's quality dropdown switches the engine presets (Low: no shadows or ambient occlusion,
+short ray cap; Medium; High). The choice is remembered and shared with the editor. The viewer
+renders on demand: a static model only redraws when you orbit, zoom, load or resize, and the
+resolution adapts to the frame time while you interact (add `?perf` to the URL for the overlay,
+which also names the WebGPU adapter).
+
+If the viewer is slow on a machine with a capable GPU, check the adapter: the viewer shows a
+warning when the browser hands it a software (CPU) WebGPU implementation. On Linux Chrome look at
+`chrome://gpu` under WebGPU and enable Vulkan via `chrome://flags/#enable-vulkan`.
+
 ## Samples
 
 Small samples live in `public/samples/` and are committed. Two are not:

@@ -12,6 +12,10 @@ import {
   type Renderer,
   makeCamera,
   makePerf,
+  makeFrameLoop,
+  observeResize,
+  QUALITY_PRESETS,
+  type QualityPreset,
   OccupancyGrid,
   parseVoxScene,
   voxSceneAnimator,
@@ -30,6 +34,17 @@ import { initTheme } from "./brand/theme";
 
 const BASE = import.meta.env.BASE_URL;
 const MARK = `<img src="${BASE}brand/logo-mark.svg" alt="" width="72" height="72">`;
+
+const QUALITY_KEY = "voxolith-quality";
+const isPreset = (v: unknown): v is QualityPreset => v === "low" || v === "medium" || v === "high";
+function storedQuality(fallback: QualityPreset): QualityPreset {
+  try {
+    const v = localStorage.getItem(QUALITY_KEY);
+    return isPreset(v) ? v : fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 // Cyclable particle effects for Particles mode.
 const EFFECTS: { name: string; make: () => VoxEffect }[] = [
@@ -89,6 +104,8 @@ async function main() {
   let gpu;
   try {
     gpu = await initGpu(canvas);
+    // A CPU adapter can't afford HiDPI; render at 1× CSS pixels.
+    if (gpu.software) gpu.pixelRatio = 1;
   } catch (err) {
     if (err instanceof WebGPUUnsupportedError) {
       showUnsupportedScreen(err.message, { appName: "Voxolith Viewer", iconHtml: MARK });
@@ -130,8 +147,14 @@ async function main() {
         <button class="vv-btn" id="vv-fx-next">▶</button>
       </span>
       <input type="file" id="vv-file" accept=".vox,.mca" hidden />
+      <select class="vv-select" id="vv-quality" title="Render quality">
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select>
       <button class="theme-toggle" id="vv-theme" type="button"></button>
     </div>
+    <div class="panel vv-warn" id="vv-warn" hidden></div>
     <div class="panel vv-info" id="vv-info" hidden></div>
     <div class="panel vv-palette" id="vv-palette" hidden></div>
     <div class="vv-hint" id="vv-hint"><div>Drop a <b>.vox</b> file here<br>or use <b>Open</b> / the sample list</div></div>`;
@@ -162,6 +185,7 @@ async function main() {
     distance: 120,
     minDistance: 6,
     maxDistance: 1400,
+    onChange: () => loop.invalidate(),
   });
   const camera = makeCamera({ target: [0, 0, 0], distance: 120, pitchDeg: 30, fovDeg: 32 });
 
@@ -185,12 +209,35 @@ async function main() {
   // Minecraft region (kept for re-cropping via the controls).
   let currentMcaBytes: Uint8Array | null = null;
 
+  // Render quality (engine presets). Software adapters start on Low.
+  let quality: QualityPreset = storedQuality(gpu.software ? "low" : "high");
+  const qualityEl = hud.querySelector("#vv-quality") as HTMLSelectElement;
+  qualityEl.value = quality;
+  const applyQuality = (r: Renderer) => r.setQuality(QUALITY_PRESETS[quality]);
+  qualityEl.addEventListener("change", () => {
+    if (isPreset(qualityEl.value)) quality = qualityEl.value;
+    try { localStorage.setItem(QUALITY_KEY, quality); } catch { /* ignore */ }
+    if (renderer) applyQuality(renderer);
+    perf.setLabel(perfLabel());
+    loop.invalidate();
+  });
+
+  // Software (CPU) WebGPU adapter: say so, since everything will feel slow.
+  const warnEl = hud.querySelector("#vv-warn") as HTMLElement;
+  if (gpu.software) {
+    warnEl.hidden = false;
+    const d = gpu.adapterInfo.description || gpu.adapterInfo.vendor || "fallback adapter";
+    warnEl.innerHTML = `<b>Software WebGPU</b> (${d}). The browser is not using your GPU; ` +
+      `check <code>chrome://gpu</code> → WebGPU, and on Linux enable Vulkan (<code>chrome://flags/#enable-vulkan</code>).`;
+  }
+
   function updateModeUI() {
     modelCtrls.hidden = mode !== "model";
     fxCtrls.hidden = mode !== "particles";
     modeModelBtn.classList.toggle("active", mode === "model");
     modeFxBtn.classList.toggle("active", mode === "particles");
     fxNameEl.textContent = EFFECTS[effectIdx].name;
+    syncContinuous();
   }
 
   const updateFrameLabel = () => {
@@ -219,7 +266,9 @@ async function main() {
     });
     occupancy = new OccupancyGrid(vm.size, vm.data);
     r.updateCoarse(occupancy.data);
+    applyQuality(r);
     renderer = r;
+    loop.invalidate();
 
     const f = framing(vm.size);
     target = f.target;
@@ -277,7 +326,9 @@ async function main() {
       occupancy = new OccupancyGrid(anim.size, anim.frame(0));
       r.updateCoarse(occupancy.data);
     }
+    applyQuality(r);
     renderer = r;
+    loop.invalidate();
 
     const f = framing(anim.size);
     target = f.target;
@@ -331,7 +382,9 @@ async function main() {
     r.setFloor({ enabled: true, y: 0, colorA: [0.22, 0.23, 0.27], colorB: [0.17, 0.18, 0.21] });
     occupancy = new OccupancyGrid(sc.size, sc.data);
     r.updateCoarse(occupancy.data);
+    applyQuality(r);
     renderer = r;
+    loop.invalidate();
 
     const f = framing(sc.size);
     target = f.target;
@@ -364,7 +417,9 @@ async function main() {
     r.setDebug(1); // transient voxels change every frame → skip coarse empty-space skipping
     r.setClipBounds([0, 0, 0], [eff.size.x - 1, eff.size.y - 1, eff.size.z - 1]);
     occupancy = null;
+    applyQuality(r);
     renderer = r;
+    loop.invalidate();
 
     const f = framing(eff.size);
     target = f.target;
@@ -412,6 +467,7 @@ async function main() {
   playBtn.addEventListener("click", () => {
     playing = !playing;
     playBtn.textContent = playing ? "⏸" : "▶";
+    syncContinuous();
   });
   fpsInput.addEventListener("change", () => {
     const v = Number(fpsInput.value);
@@ -480,46 +536,57 @@ async function main() {
     if (file) loadFile(file);
   });
 
+  const perfLabel = () => {
+    const a = gpu!.adapterInfo;
+    const name = [a.vendor, a.architecture, a.description].filter(Boolean).join(" · ") || "unknown adapter";
+    return `${name}${gpu!.software ? " (software)" : ""} · quality ${quality}`;
+  };
   const perf = makePerf({
     enabled: new URLSearchParams(location.search).has("perf"),
     scale: gpu.renderScale,
+    minScale: gpu.software ? 0.25 : 0.35,
+    label: perfLabel(),
   });
 
-  let last = performance.now();
-  function loop(now: number) {
-    requestAnimationFrame(loop);
-    const dtMs = now - last;
-    if (dtMs < 1000 / 60 - 1) return;
-    last = now;
-    const dt = Math.min(0.05, dtMs / 1000);
-    perf.frame(now);
-    gpu!.renderScale = perf.scale();
-    resizeToDisplay(gpu!);
-    if (mode === "particles" && effect && renderer) {
-      effect.tick(dt);
-      renderer.updateVoxels(effect.data);
-    } else if (mode === "model" && animator && renderer && playing && animator.frameCount > 1) {
-      animAccum += dt;
-      const step = 1 / fps;
-      let changed = false;
-      while (animAccum >= step) {
-        animAccum -= step;
-        frameIdx = (frameIdx + 1) % animator.frameCount;
-        changed = true;
+  // Render on demand: a static model only redraws when the camera, scene,
+  // quality or viewport changes. Particles and animated scenes run continuously.
+  const loop = makeFrameLoop({
+    render(now, dt) {
+      perf.frame(now);
+      gpu!.renderScale = perf.scale();
+      resizeToDisplay(gpu!);
+      if (mode === "particles" && effect && renderer) {
+        effect.tick(dt);
+        renderer.updateVoxels(effect.data);
+      } else if (mode === "model" && animator && renderer && playing && animator.frameCount > 1) {
+        animAccum += dt;
+        const step = 1 / fps;
+        let changed = false;
+        while (animAccum >= step) {
+          animAccum -= step;
+          frameIdx = (frameIdx + 1) % animator.frameCount;
+          changed = true;
+        }
+        if (changed) {
+          renderer.updateVoxels(animator.frame(frameIdx));
+          updateFrameLabel();
+        }
       }
-      if (changed) {
-        renderer.updateVoxels(animator.frame(frameIdx));
-        updateFrameLabel();
+      if (renderer) {
+        renderer.render({
+          ...camera(orbit.yaw(), orbit.distance(), target, orbit.pitch()),
+          ...ENV,
+        });
       }
-    }
-    if (renderer) {
-      renderer.render({
-        ...camera(orbit.yaw(), orbit.distance(), target, orbit.pitch()),
-        ...ENV,
-      });
-    }
+    },
+  });
+  observeResize(canvas, loop);
+  function syncContinuous() {
+    const animated = mode === "model" && !!animator && playing && animator.frameCount > 1;
+    loop.setContinuous(mode === "particles" || animated);
+    loop.invalidate();
   }
-  requestAnimationFrame(loop);
+  syncContinuous();
 
   // Start with a sample so the viewer isn't empty (?file=<name> overrides).
   const qFile = new URLSearchParams(location.search).get("file");

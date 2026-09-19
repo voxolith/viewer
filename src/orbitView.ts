@@ -15,6 +15,8 @@ export interface OrbitOptions {
   minDistance: number;
   maxDistance: number;
   sensitivity?: number; // degrees per pixel
+  /** Called whenever yaw, pitch or distance changes (render-on-demand hook). */
+  onChange?: () => void;
 }
 
 export function makeOrbitView(el: HTMLElement, opts: OrbitOptions): OrbitView {
@@ -41,6 +43,7 @@ export function makeOrbitView(el: HTMLElement, opts: OrbitOptions): OrbitView {
     pitch = Math.max(3, Math.min(87, pitch + (e.clientY - lastY) * sens));
     lastX = e.clientX;
     lastY = e.clientY;
+    opts.onChange?.();
   });
   const end = () => {
     dragging = false;
@@ -52,6 +55,7 @@ export function makeOrbitView(el: HTMLElement, opts: OrbitOptions): OrbitView {
     (e) => {
       e.preventDefault();
       dist = clampDist(dist * (1 + Math.sign(e.deltaY) * 0.1));
+      opts.onChange?.();
     },
     { passive: false },
   );
@@ -62,6 +66,7 @@ export function makeOrbitView(el: HTMLElement, opts: OrbitOptions): OrbitView {
     distance: () => dist,
     setDistance: (d: number) => {
       dist = clampDist(d);
+      opts.onChange?.();
     },
   };
 }

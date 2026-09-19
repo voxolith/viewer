@@ -224,3 +224,22 @@ body {
 [hidden] {
   display: none !important;
 }
+
+/* Software-adapter warning under the toolbar */
+.vv-warn {
+  position: absolute;
+  top: 64px;
+  left: 12px;
+  max-width: 560px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.vv-warn code {
+  background: var(--control);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
