@@ -22,6 +22,7 @@ import {
 } from "@voxolith/engine";
 import { registerBushGenerators } from "@voxolith/gen-bush";
 import { registerGrassGenerators } from "@voxolith/gen-grass";
+import { registerRockGenerators } from "@voxolith/gen-rock";
 import { registerTreeGenerators } from "@voxolith/gen-tree";
 
 export interface GeneratedModel {
@@ -59,6 +60,7 @@ export function makeGeneratorUi(onModel: (m: GeneratedModel) => void): Generator
   registerTreeGenerators();
   registerBushGenerators();
   registerGrassGenerators();
+  registerRockGenerators();
   const generators = listGenerators();
 
   let gen = generators[0] as EntityGenerator<unknown>;
