@@ -20,6 +20,8 @@ import {
   type EntityGenerator,
   type ParamSpec,
 } from "@voxolith/engine";
+import { registerBushGenerators } from "@voxolith/gen-bush";
+import { registerGrassGenerators } from "@voxolith/gen-grass";
 import { registerTreeGenerators } from "@voxolith/gen-tree";
 
 export interface GeneratedModel {
@@ -52,7 +54,11 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: 
 };
 
 export function makeGeneratorUi(onModel: (m: GeneratedModel) => void): GeneratorUi {
+  // Importing a generator package and registering it is the whole integration:
+  // the picker, the controls and the share codes all come from the registry.
   registerTreeGenerators();
+  registerBushGenerators();
+  registerGrassGenerators();
   const generators = listGenerators();
 
   let gen = generators[0] as EntityGenerator<unknown>;
