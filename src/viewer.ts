@@ -10,6 +10,8 @@ export interface ViewModel {
   size: { x: number; y: number; z: number };
   data: Uint8Array;
   palette: Float32Array; // 256 × vec4
+  /** Optional 256 × 8 material block; enables glass/emissive shading. */
+  materials?: Float32Array;
   /** Original MagicaVoxel dimensions (x, y, z) for display. */
   srcSize: { x: number; y: number; z: number };
   voxelCount: number;

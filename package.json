@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@voxolith/engine": "workspace:*",
+    "@voxolith/gen-building": "workspace:*",
     "@voxolith/gen-bush": "workspace:*",
     "@voxolith/gen-grass": "workspace:*",
     "@voxolith/gen-rock": "workspace:*",

@@ -262,7 +262,7 @@ async function main() {
     updateModeUI();
     // A fresh renderer per load (the grid size changes); fine for a viewer.
     // (The WESL shader links once on the first call, then it's cached.)
-    const r = await createRenderer(gpu!, { size: vm.size, data: vm.data, palette: vm.palette });
+    const r = await createRenderer(gpu!, { size: vm.size, data: vm.data, palette: vm.palette, materials: vm.materials });
     r.setFloor({
       enabled: true,
       y: 0,

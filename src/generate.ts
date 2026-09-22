@@ -10,6 +10,7 @@ import {
   clampToSpec,
   decodeState,
   encodeState,
+  entityMaterials,
   entityPalette,
   fingerprint,
   generateFromState,
@@ -23,6 +24,7 @@ import {
 import { registerBushGenerators } from "@voxolith/gen-bush";
 import { registerGrassGenerators } from "@voxolith/gen-grass";
 import { registerRockGenerators } from "@voxolith/gen-rock";
+import { registerBuildingGenerators } from "@voxolith/gen-building";
 import { registerTreeGenerators } from "@voxolith/gen-tree";
 
 export interface GeneratedModel {
@@ -61,6 +63,7 @@ export function makeGeneratorUi(onModel: (m: GeneratedModel) => void): Generator
   registerBushGenerators();
   registerGrassGenerators();
   registerRockGenerators();
+  registerBuildingGenerators();
   const generators = listGenerators();
 
   let gen = generators[0] as EntityGenerator<unknown>;
@@ -299,6 +302,7 @@ export function entityToView(entity: Entity): {
   size: { x: number; y: number; z: number };
   data: Uint8Array;
   palette: Float32Array;
+  materials?: Float32Array;
   srcSize: { x: number; y: number; z: number };
   voxelCount: number;
   usedColors: { index: number; rgb: [number, number, number] }[];
@@ -315,6 +319,7 @@ export function entityToView(entity: Entity): {
     size: model.size,
     data: model.data,
     palette: entityPalette(model, 1),
+    materials: entityMaterials(model, 1),
     srcSize: model.size,
     voxelCount: count,
     // Role `i` occupies slot `i + 1`, matching entityPalette.
