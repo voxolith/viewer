@@ -267,6 +267,7 @@ async function main() {
     occupancy = new OccupancyGrid(vm.size, vm.data);
     r.updateCoarse(occupancy.data);
     applyQuality(r);
+    renderer?.destroy(); // the grid size changes per load, so this is a new renderer
     renderer = r;
     loop.invalidate();
 
@@ -327,6 +328,7 @@ async function main() {
       r.updateCoarse(occupancy.data);
     }
     applyQuality(r);
+    renderer?.destroy(); // the grid size changes per load, so this is a new renderer
     renderer = r;
     loop.invalidate();
 
@@ -383,6 +385,7 @@ async function main() {
     occupancy = new OccupancyGrid(sc.size, sc.data);
     r.updateCoarse(occupancy.data);
     applyQuality(r);
+    renderer?.destroy(); // the grid size changes per load, so this is a new renderer
     renderer = r;
     loop.invalidate();
 
@@ -418,6 +421,7 @@ async function main() {
     r.setClipBounds([0, 0, 0], [eff.size.x - 1, eff.size.y - 1, eff.size.z - 1]);
     occupancy = null;
     applyQuality(r);
+    renderer?.destroy(); // the grid size changes per load, so this is a new renderer
     renderer = r;
     loop.invalidate();
 
