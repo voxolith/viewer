@@ -3,6 +3,7 @@
 // with the wheel. Shows model dimensions, voxel count, and the palette in use.
 
 import "./styles.css";
+import { entityToView, makeGeneratorUi } from "./generate";
 import {
   initGpu,
   resizeToDisplay,
@@ -120,6 +121,7 @@ async function main() {
       <div class="vv-seg">
         <button class="vv-seg-btn active" id="vv-mode-model">Model</button>
         <button class="vv-seg-btn" id="vv-mode-fx">Particles</button>
+        <button class="vv-seg-btn" id="vv-mode-gen">Generate</button>
       </div>
       <span id="vv-model-ctrls">
         <button class="vv-btn" id="vv-open">Open .vox</button>
@@ -168,6 +170,7 @@ async function main() {
   const fxCtrls = hud.querySelector("#vv-fx-ctrls") as HTMLElement;
   const modeModelBtn = hud.querySelector("#vv-mode-model") as HTMLElement;
   const modeFxBtn = hud.querySelector("#vv-mode-fx") as HTMLElement;
+  const modeGenBtn = hud.querySelector("#vv-mode-gen") as HTMLElement;
   const fxNameEl = hud.querySelector("#vv-fx-name") as HTMLElement;
   const animEl = hud.querySelector("#vv-anim") as HTMLElement;
   const playBtn = hud.querySelector("#vv-play") as HTMLButtonElement;
@@ -193,7 +196,7 @@ async function main() {
   let occupancy: OccupancyGrid | null = null;
   let target: Vec3 = [0, 0, 0];
 
-  type Mode = "model" | "particles";
+  type Mode = "model" | "particles" | "generate";
   let mode: Mode = "model";
   let currentVm: ViewModel | null = null;
   let currentScene: VoxScene | null = null;
@@ -236,6 +239,8 @@ async function main() {
     fxCtrls.hidden = mode !== "particles";
     modeModelBtn.classList.toggle("active", mode === "model");
     modeFxBtn.classList.toggle("active", mode === "particles");
+    modeGenBtn.classList.toggle("active", mode === "generate");
+    genUi?.setVisible(mode === "generate");
     fxNameEl.textContent = EFFECTS[effectIdx].name;
     syncContinuous();
   }
@@ -463,8 +468,32 @@ async function main() {
     void enterParticles(); // rebuild the stage for the new (or replayed) effect
   };
 
+  // --- generator mode -------------------------------------------------------
+  // Everything the panel shows comes from the generator's own ParamSpec list;
+  // the viewer knows nothing about what it is building.
+  const genUi = makeGeneratorUi((m) => {
+    void setModel(entityToView(m.entity), `${m.entity.id} · ${m.fingerprint}`).then(() => {
+      // setModel drops back to model mode; generator mode owns the view here.
+      mode = "generate";
+      updateModeUI();
+    });
+  });
+  (hud.querySelector(".vv-toolbar") as HTMLElement).insertBefore(
+    genUi.toolbar,
+    hud.querySelector("#vv-quality"),
+  );
+  hud.append(genUi.panel);
+
+  async function enterGenerate(): Promise<void> {
+    mode = "generate";
+    updateModeUI();
+    genUi.rebuild();
+  }
+
+  modeGenBtn.addEventListener("click", () => void enterGenerate());
   modeModelBtn.addEventListener("click", () => void enterModel());
   modeFxBtn.addEventListener("click", () => void enterParticles());
+
   hud.querySelector("#vv-fx-prev")!.addEventListener("click", () => cycleEffect(-1));
   hud.querySelector("#vv-fx-next")!.addEventListener("click", () => cycleEffect(1));
 
@@ -592,14 +621,29 @@ async function main() {
   }
   syncContinuous();
 
-  // Start with a sample so the viewer isn't empty (?file=<name> overrides).
-  const qFile = new URLSearchParams(location.search).get("file");
-  loadSample(qFile && SAMPLES.some((s) => s.file === qFile) ? qFile : SAMPLES[0].file);
+  // Opening state. This has to be the last thing main() does: it loads a model,
+  // which reaches into consts declared throughout the function.
+  //
+  // A link is the share — ?gen=<code> opens that exact model — otherwise start
+  // from a sample so the viewer isn't empty (?file=<name> picks which).
+  const query = new URLSearchParams(location.search);
+  const shared = query.get("gen");
+  if (shared && genUi.load(shared)) {
+    mode = "generate";
+    updateModeUI();
+  } else {
+    if (shared) console.warn("[viewer] could not read the shared generator code; loading a sample");
+    const qFile = query.get("file");
+    loadSample(qFile && SAMPLES.some((s) => s.file === qFile) ? qFile : SAMPLES[0].file);
+  }
 }
 
 main().catch((err) => {
   console.error(err);
-  showUnsupportedScreen("An unexpected error occurred while starting up.", {
+  // Say what went wrong. "An unexpected error occurred" tells a user nothing and
+  // hides the cause from a bug report.
+  const detail = err instanceof Error ? err.message : String(err);
+  showUnsupportedScreen(`Something went wrong while starting up: ${detail}`, {
     appName: "Voxolith Viewer",
     iconHtml: MARK,
   });

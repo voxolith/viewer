@@ -20,6 +20,8 @@
     "render:vox": "bun tools/render-vox.ts"
   },
   "dependencies": {
+    "@voxolith/engine": "workspace:*",
+    "@voxolith/gen-tree": "workspace:*",
     "@voxolith/renderer": "workspace:*"
   },
   "devDependencies": {
