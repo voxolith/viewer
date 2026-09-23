@@ -29,7 +29,7 @@ import {
   type VoxEffect,
   type Vec3,
 } from "@voxolith/renderer";
-import { makeOrbitView } from "./orbitView";
+import { createInput, makeOrbitController, prepareSurface } from "@voxolith/engine/input";
 import { toViewModel, framing, type ViewModel } from "./viewer";
 import { initTheme } from "./brand/theme";
 
@@ -182,13 +182,12 @@ async function main() {
   const mcaZ = hud.querySelector("#vv-mca-z") as HTMLInputElement;
   const mcaDs = hud.querySelector("#vv-mca-ds") as HTMLSelectElement;
 
-  const orbit = makeOrbitView(canvas, {
-    yaw: 35,
-    pitch: 28,
-    distance: 120,
-    minDistance: 6,
-    maxDistance: 1400,
-    onChange: () => loop.invalidate(),
+  // Drag to orbit, wheel or pinch (touch, trackpad) to zoom. Every input
+  // event requests a frame.
+  prepareSurface(canvas);
+  const input = createInput(canvas, { loop: { invalidate: () => loop.invalidate() } });
+  const orbit = makeOrbitController(input, {
+    yaw: 35, pitch: 28, pitchLimits: [3, 87], distance: 120, distanceLimits: [6, 1400], sensitivity: 0.4, fovDeg: 32,
   });
   const camera = makeCamera({ target: [0, 0, 0], distance: 120, pitchDeg: 30, fovDeg: 32 });
 
@@ -278,7 +277,7 @@ async function main() {
 
     const f = framing(vm.size);
     target = f.target;
-    orbit.setDistance(f.distance);
+    orbit.set({ distance: f.distance });
 
     infoEl.hidden = false;
     paletteEl.hidden = false;
@@ -339,7 +338,7 @@ async function main() {
 
     const f = framing(anim.size);
     target = f.target;
-    orbit.setDistance(f.distance);
+    orbit.set({ distance: f.distance });
 
     animEl.hidden = !animated;
     playing = true;
@@ -396,7 +395,7 @@ async function main() {
 
     const f = framing(sc.size);
     target = f.target;
-    orbit.setDistance(f.distance);
+    orbit.set({ distance: f.distance });
     infoEl.innerHTML = `
       <div class="name">${name}</div>
       <div class="row"><span>Size</span><span>${sc.size.x}×${sc.size.y}×${sc.size.z}</span></div>
@@ -432,7 +431,7 @@ async function main() {
 
     const f = framing(eff.size);
     target = f.target;
-    orbit.setDistance(f.distance);
+    orbit.set({ distance: f.distance });
 
     infoEl.hidden = false;
     paletteEl.hidden = true;
