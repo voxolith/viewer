@@ -4,6 +4,7 @@
 
 import "./styles.css";
 import { entityToView, makeGeneratorUi } from "./generate";
+import { CLIP_FPS, makeRigPlayer, type RigPlayer } from "./rigged";
 import {
   initGpu,
   resizeToDisplay,
@@ -240,6 +241,9 @@ async function main() {
     modeFxBtn.classList.toggle("active", mode === "particles");
     modeGenBtn.classList.toggle("active", mode === "generate");
     genUi?.setVisible(mode === "generate");
+    // The frame controls follow the mode: generator mode plays rigged clips.
+    if (genUi && mode === "generate") genUi.toolbar.append(animEl);
+    else if (animEl.parentElement !== modelCtrls) modelCtrls.insertBefore(animEl, mcaEl);
     fxNameEl.textContent = EFFECTS[effectIdx].name;
     syncContinuous();
   }
@@ -470,11 +474,60 @@ async function main() {
   // --- generator mode -------------------------------------------------------
   // Everything the panel shows comes from the generator's own ParamSpec list;
   // the viewer knows nothing about what it is building.
+  // Rigged generators get clip playback: a clip picker beside the frame controls.
+  const clipSel = document.createElement("select");
+  clipSel.className = "vv-select";
+  clipSel.title = "Clip";
+  clipSel.hidden = true;
+  animEl.prepend(clipSel);
+  let rigPlayer: RigPlayer | null = null;
+  clipSel.addEventListener("change", () => {
+    if (!rigPlayer) return;
+    rigPlayer.setClip(clipSel.value);
+    frameIdx = 0;
+    animAccum = 0;
+    playing = true;
+    playBtn.textContent = "⏸";
+    syncContinuous();
+    loop.invalidate();
+  });
   const genUi = makeGeneratorUi((m) => {
-    void setModel(entityToView(m.entity), `${m.entity.id} · ${m.fingerprint}`).then(() => {
+    void setModel(entityToView(m.entity), `${m.entity.id} · ${m.fingerprint}`).then(async () => {
       // setModel drops back to model mode; generator mode owns the view here.
       mode = "generate";
+      rigPlayer = makeRigPlayer(m.entity);
+      clipSel.hidden = !rigPlayer;
+      if (rigPlayer) {
+        const keep = clipSel.value;
+        clipSel.innerHTML = rigPlayer.clips.map((c) => `<option value="${c}">${c}</option>`).join("");
+        const first = rigPlayer.clips.includes(keep) ? keep : rigPlayer.clips.includes("walk") ? "walk" : rigPlayer.clips[0];
+        clipSel.value = first;
+        rigPlayer.setClip(first);
+        const r = await createRenderer(gpu!, { size: rigPlayer.size, data: rigPlayer.frame(0), palette: rigPlayer.palette, materials: entityToView(m.entity).materials });
+        r.setFloor({ enabled: true, y: 0, colorA: [0.22, 0.23, 0.27], colorB: [0.17, 0.18, 0.21] });
+        // Frames move each tick, like an animated scene.
+        r.setDebug(1);
+        r.setClipBounds([0, 0, 0], [rigPlayer.size.x - 1, rigPlayer.size.y - 1, rigPlayer.size.z - 1]);
+        occupancy = null;
+        applyQuality(r);
+        renderer?.destroy();
+        renderer = r;
+        animator = rigPlayer;
+        frameIdx = 0;
+        animAccum = 0;
+        fps = CLIP_FPS;
+        fpsInput.value = String(CLIP_FPS);
+        playing = true;
+        playBtn.textContent = "⏸";
+        animEl.hidden = false;
+        const f = framing(rigPlayer.size);
+        target = f.target;
+        orbit.set({ distance: f.distance });
+      }
       updateModeUI();
+      if (rigPlayer) animEl.hidden = false;
+      syncContinuous();
+      loop.invalidate();
     });
   });
   (hud.querySelector(".vv-toolbar") as HTMLElement).insertBefore(
@@ -590,7 +643,7 @@ async function main() {
       if (mode === "particles" && effect && renderer) {
         effect.tick(dt);
         renderer.updateVoxels(effect.data);
-      } else if (mode === "model" && animator && renderer && playing && animator.frameCount > 1) {
+      } else if ((mode === "model" || mode === "generate") && animator && renderer && playing && animator.frameCount > 1) {
         animAccum += dt;
         const step = 1 / fps;
         let changed = false;
@@ -614,7 +667,7 @@ async function main() {
   });
   observeResize(canvas, loop);
   function syncContinuous() {
-    const animated = mode === "model" && !!animator && playing && animator.frameCount > 1;
+    const animated = (mode === "model" || mode === "generate") && !!animator && playing && animator.frameCount > 1;
     loop.setContinuous(mode === "particles" || animated);
     loop.invalidate();
   }

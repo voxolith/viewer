@@ -25,6 +25,7 @@ import { registerBushGenerators } from "@voxolith/gen-bush";
 import { registerGrassGenerators } from "@voxolith/gen-grass";
 import { registerRockGenerators } from "@voxolith/gen-rock";
 import { registerBuildingGenerators } from "@voxolith/gen-building";
+import { registerCreatureGenerators } from "@voxolith/gen-creature";
 import { registerTreeGenerators } from "@voxolith/gen-tree";
 
 export interface GeneratedModel {
@@ -64,6 +65,7 @@ export function makeGeneratorUi(onModel: (m: GeneratedModel) => void): Generator
   registerGrassGenerators();
   registerRockGenerators();
   registerBuildingGenerators();
+  registerCreatureGenerators();
   const generators = listGenerators();
 
   let gen = generators[0] as EntityGenerator<unknown>;
@@ -325,7 +327,8 @@ export function entityToView(entity: Entity): {
     // Role `i` occupies slot `i + 1`, matching entityPalette.
     usedColors: [...used].sort((a, b) => a - b).map((index) => ({
       index,
-      rgb: (model.roles[index - 1]?.color ?? [1, 0, 1]) as [number, number, number],
+      // Swatches are CSS rgb(), 0..255; role colours are 0..1.
+      rgb: (model.roles[index - 1]?.color ?? [1, 0, 1]).map((c) => Math.round(c * 255)) as [number, number, number],
     })),
   };
 }
