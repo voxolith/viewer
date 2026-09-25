@@ -15,6 +15,10 @@ with [`@voxolith/renderer`](https://github.com/voxolith/renderer) (WebGPU).
 - Animated multi-frame `.vox` scenes play back with frame controls
 - Minecraft `.mca` regions load with crop controls
 - A Particles mode cycles the engine's explosion and muzzle-flash effects
+- A Generate mode builds any registered generator's model from its parameters and a seed, with
+  a share code; rigged ones play their clips. Its scale picker builds the same design at 100
+  voxels per metre (refined: single leaves, bark, bricks and tiles at real size), loaded brick by
+  brick since it is too large to hold densely
 
 ## Requirements
 

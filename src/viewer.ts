@@ -1,3 +1,4 @@
+import type { SparseVoxels } from "@voxolith/renderer/core";
 // Turns a parsed .vox model into something the @voxolith/renderer engine can render: crop to
 // the occupied bounding box (so world-baked models frame nicely), convert the
 // MagicaVoxel Z-up axis to the engine's Y-up, and copy the file palette so the
@@ -8,7 +9,10 @@ import type { VoxModel, Vec3 } from "@voxolith/renderer";
 export interface ViewModel {
   /** Engine grid size (cropped + Y-up). */
   size: { x: number; y: number; z: number };
+  /** Dense voxels; empty when `sparse` holds them instead. */
   data: Uint8Array;
+  /** A model too large to hold densely (a generator at 100 voxels per metre). */
+  sparse?: SparseVoxels;
   palette: Float32Array; // 256 × vec4
   /** Optional 256 × 8 material block; enables glass/emissive shading. */
   materials?: Float32Array;

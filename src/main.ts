@@ -265,15 +265,33 @@ async function main() {
     updateModeUI();
     // A fresh renderer per load (the grid size changes); fine for a viewer.
     // (The WESL shader links once on the first call, then it's cached.)
-    const r = await createRenderer(gpu!, { size: vm.size, data: vm.data, palette: vm.palette, materials: vm.materials });
+    const sparse = vm.sparse;
+    const r = await createRenderer(gpu!, { size: vm.size, data: sparse ? undefined : vm.data, palette: vm.palette, materials: vm.materials });
     r.setFloor({
       enabled: true,
       y: 0,
       colorA: [0.22, 0.23, 0.27],
       colorB: [0.17, 0.18, 0.21],
     });
-    occupancy = new OccupancyGrid(vm.size, vm.data);
-    r.updateCoarse(occupancy.data);
+    if (sparse) {
+      // Too big to hold densely: write it a brick at a time.
+      const [dx, dy] = [Math.ceil(vm.size.x / 8), Math.ceil(vm.size.y / 8)];
+      const boxes = [...sparse.bricks.keys()].map((key) => {
+        const bx = key % dx, by = Math.floor(key / dx) % dy, bz = Math.floor(key / (dx * dy));
+        return { x0: bx * 8, y0: by * 8, z0: bz * 8, x1: bx * 8 + 7, y1: by * 8 + 7, z1: bz * 8 + 7 };
+      });
+      r.setClipBounds([0, 0, 0], [vm.size.x - 1, vm.size.y - 1, vm.size.z - 1]);
+      r.editMany(boxes, (cells, ox, oy, oz) => {
+        const b = sparse.bricks.get((ox >> 3) + (oy >> 3) * dx + (oz >> 3) * dx * dy);
+        if (!b) return false;
+        cells.set(b);
+        return true;
+      });
+      occupancy = null;
+    } else {
+      occupancy = new OccupancyGrid(vm.size, vm.data);
+      r.updateCoarse(occupancy.data);
+    }
     applyQuality(r);
     renderer?.destroy(); // the grid size changes per load, so this is a new renderer
     renderer = r;

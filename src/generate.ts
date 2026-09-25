@@ -16,11 +16,13 @@ import {
   generateFromState,
   getParam,
   listGenerators,
+  voxelCount,
   withParam,
   type Entity,
   type EntityGenerator,
   type ParamSpec,
 } from "@voxolith/engine";
+import type { SparseVoxels } from "@voxolith/renderer/core";
 import { registerBushGenerators } from "@voxolith/gen-bush";
 import { registerGrassGenerators } from "@voxolith/gen-grass";
 import { registerRockGenerators } from "@voxolith/gen-rock";
@@ -71,6 +73,8 @@ export function makeGeneratorUi(onModel: (m: GeneratedModel) => void): Generator
   let gen = generators[0] as EntityGenerator<unknown>;
   let params: unknown = structuredClone(gen.defaults);
   let seed = 1;
+  /** Voxels per metre to generate at: 10 (native) or a finer scale the generator offers. */
+  let vpm = 10;
   let latest: GeneratedModel | null = null;
 
   // --- toolbar --------------------------------------------------------------
@@ -96,7 +100,21 @@ export function makeGeneratorUi(onModel: (m: GeneratedModel) => void): Generator
   diceBtn.title = "New seed";
   const resetBtn = el("button", "vv-btn", "Reset") as HTMLButtonElement;
   resetBtn.title = "Back to this generator's defaults";
-  toolbar.append(genSel, seedWrap, diceBtn, resetBtn);
+  // Finer scales the generator offers (its `scales`): the same design refined.
+  const scaleSel = el("select", "vv-select") as HTMLSelectElement;
+  scaleSel.title = "Voxels per metre";
+  const syncScales = () => {
+    const scales = [10, ...(gen.scales ?? [])];
+    if (!scales.includes(vpm)) vpm = 10;
+    scaleSel.innerHTML = scales.map((v) => `<option value="${v}">${v} / m</option>`).join("");
+    scaleSel.value = String(vpm);
+    scaleSel.hidden = scales.length < 2;
+  };
+  scaleSel.addEventListener("change", () => {
+    vpm = Number(scaleSel.value) || 10;
+    rebuild();
+  });
+  toolbar.append(genSel, scaleSel, seedWrap, diceBtn, resetBtn);
 
   // --- panel ----------------------------------------------------------------
   const panel = el("div", "panel vv-gen");
@@ -203,7 +221,7 @@ export function makeGeneratorUi(onModel: (m: GeneratedModel) => void): Generator
     const t0 = performance.now();
     let entity: Entity;
     try {
-      entity = generateFromState({ generator: gen.id, version: gen.version, seed, params });
+      entity = generateFromState({ generator: gen.id, version: gen.version, seed, params }, undefined, { voxelsPerMetre: vpm });
     } catch (err) {
       status.textContent = `Generation failed: ${err instanceof Error ? err.message : String(err)}`;
       return;
@@ -212,9 +230,10 @@ export function makeGeneratorUi(onModel: (m: GeneratedModel) => void): Generator
     const ms = performance.now() - t0;
     latest = { entity, code, fingerprint: fingerprint(code), ms };
     codeInput.value = code;
-    const voxels = entity.model.data.reduce((n, v) => n + (v ? 1 : 0), 0);
+    const voxels = voxelCount(entity.model);
     const { x, y, z } = entity.model.size;
-    status.textContent = `${x}×${y}×${z} · ${voxels.toLocaleString()} voxels · ${ms.toFixed(0)} ms · ${latest.fingerprint}`;
+    const mb = entity.model.sparse ? ` · ${((entity.model.sparse.bricks.size * 288) / 1048576).toFixed(0)} MB of bricks` : "";
+    status.textContent = `${x}×${y}×${z} · ${voxels.toLocaleString()} voxels${mb} · ${vpm} voxels/m · ${ms.toFixed(0)} ms · ${latest.fingerprint}`;
     // Keep the address bar in step, so the page URL is itself the share link.
     const url = new URL(location.href);
     url.searchParams.set("gen", code);
@@ -228,6 +247,7 @@ export function makeGeneratorUi(onModel: (m: GeneratedModel) => void): Generator
     gen = next as EntityGenerator<unknown>;
     genSel.value = id;
     if (!keepParams) params = structuredClone(gen.defaults);
+    syncScales();
     buildControls();
   }
 
@@ -280,6 +300,7 @@ export function makeGeneratorUi(onModel: (m: GeneratedModel) => void): Generator
     if (e.key === "Enter") load(codeInput.value);
   });
 
+  syncScales();
   buildControls();
 
   return {
@@ -303,6 +324,7 @@ export function makeGeneratorUi(onModel: (m: GeneratedModel) => void): Generator
 export function entityToView(entity: Entity): {
   size: { x: number; y: number; z: number };
   data: Uint8Array;
+  sparse?: SparseVoxels;
   palette: Float32Array;
   materials?: Float32Array;
   srcSize: { x: number; y: number; z: number };
@@ -312,14 +334,19 @@ export function entityToView(entity: Entity): {
   const { model } = entity;
   const used = new Set<number>();
   let count = 0;
-  for (const v of model.data) {
-    if (!v) continue;
-    count++;
-    used.add(v);
-  }
+  const visit = (a: Uint8Array) => {
+    for (const v of a) {
+      if (!v) continue;
+      count++;
+      used.add(v);
+    }
+  };
+  if (model.sparse) for (const b of model.sparse.bricks.values()) visit(b);
+  else visit(model.data);
   return {
     size: model.size,
     data: model.data,
+    sparse: model.sparse,
     palette: entityPalette(model, 1),
     materials: entityMaterials(model, 1),
     srcSize: model.size,
