@@ -31,6 +31,7 @@ import {
   type Vec3,
 } from "@voxolith/renderer";
 import { createInput, makeOrbitController, prepareSurface } from "@voxolith/engine/input";
+import { registerServiceWorker } from "@voxolith/engine/pwa";
 import { toViewModel, framing, type ViewModel } from "./viewer";
 import { initTheme } from "./brand/theme";
 
@@ -609,7 +610,9 @@ async function main() {
   const loadFile = (file: File) =>
     file.arrayBuffer().then((b) => loadBuffer(b, file.name));
   const loadSample = async (file: string) => {
-    const res = await fetch(`${import.meta.env.BASE_URL}samples/${file}`);
+    // Offline, only samples opened before are cached (the service worker's runtime cache).
+    const res = await fetch(`${import.meta.env.BASE_URL}samples/${file}`).catch(() => null);
+    if (!res) return showError(`${file}: could not be fetched${navigator.onLine ? "" : " (offline, and not opened before)"}`);
     if (!res.ok) return showError(`${file}: ${res.status}`);
     loadBuffer(await res.arrayBuffer(), file);
   };
@@ -707,6 +710,13 @@ async function main() {
     loadSample(qFile && SAMPLES.some((s) => s.file === qFile) ? qFile : SAMPLES[0].file);
   }
 }
+
+// Cache the app (and samples once opened) so a second visit loads offline. Skips dev and
+// localhost. A new deploy takes over quietly; the next reload runs it.
+registerServiceWorker({
+  onOfflineReady: () => console.info("[viewer] ready to work offline"),
+  onUpdate: () => console.info("[viewer] a new version is installed; reload to use it"),
+});
 
 main().catch((err) => {
   console.error(err);

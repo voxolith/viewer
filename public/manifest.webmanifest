@@ -1,0 +1,16 @@
+{
+  "name": "Voxolith Viewer",
+  "short_name": "Viewer",
+  "description": "Open MagicaVoxel .vox models and Minecraft .mca regions, and build generator models, rendered with the Voxolith WebGPU engine.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#151B29",
+  "theme_color": "#151B29",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
