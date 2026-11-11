@@ -32,6 +32,7 @@ import {
 } from "@voxolith/renderer";
 import { createInput, makeOrbitController, prepareSurface } from "@voxolith/engine/input";
 import { registerServiceWorker } from "@voxolith/engine/pwa";
+import { classicSky, classicSkyParams } from "@voxolith/engine/atmosphere";
 import { toViewModel, framing, type ViewModel } from "./viewer";
 import { initTheme } from "./brand/theme";
 
@@ -86,16 +87,22 @@ const ENV = {
   lightColor: [1.0, 0.98, 0.94] as Vec3,
   ambientSky: [0.5, 0.53, 0.6] as Vec3,
   ambientGround: [0.3, 0.29, 0.27] as Vec3,
+};
+// The backdrop: the engine's classic sky (every renderer here is created with
+// `background: classicSky`), with the sun and moon discs off. Constant, so packed once.
+const SKY = classicSkyParams({
   sunDir: SUN,
-  moonDir: [0, -1, 0] as Vec3,
-  sunColor: [1, 0.96, 0.85] as Vec3,
-  moonColor: [0, 0, 0] as Vec3,
-  skyTop: [0.15, 0.16, 0.19] as Vec3,
-  skyHorizon: [0.27, 0.29, 0.33] as Vec3,
+  moonDir: [0, -1, 0],
+  sunColor: [1, 0.96, 0.85],
+  moonColor: [0, 0, 0],
+  skyTop: [0.15, 0.16, 0.19],
+  skyHorizon: [0.27, 0.29, 0.33],
   nightFactor: 0,
   sunIntensity: 0,
   moonIntensity: 0,
-};
+});
+/** Renderer options shared by every scene: the classic sky reads {@link SKY}. */
+const RENDERER_OPTS = { background: classicSky };
 
 async function main() {
   const canvas = document.getElementById("scene") as HTMLCanvasElement | null;
@@ -267,7 +274,7 @@ async function main() {
     // A fresh renderer per load (the grid size changes); fine for a viewer.
     // (The WESL shader links once on the first call, then it's cached.)
     const sparse = vm.sparse;
-    const r = await createRenderer(gpu!, { size: vm.size, data: sparse ? undefined : vm.data, palette: vm.palette, materials: vm.materials });
+    const r = await createRenderer(gpu!, { size: vm.size, data: sparse ? undefined : vm.data, palette: vm.palette, materials: vm.materials }, RENDERER_OPTS);
     r.setFloor({
       enabled: true,
       y: 0,
@@ -339,7 +346,7 @@ async function main() {
       data: anim.frame(0),
       palette: anim.palette,
       materials: packMaterials(scene),
-    });
+    }, RENDERER_OPTS);
     r.setFloor({ enabled: true, y: 0, colorA: [0.22, 0.23, 0.27], colorB: [0.17, 0.18, 0.21] });
     if (animated) {
       // Frames move each tick, so the coarse grid can't stay valid; single-step
@@ -407,7 +414,7 @@ async function main() {
 
     const r = await createRenderer(gpu!, {
       size: sc.size, data: sc.data, palette: sc.palette, materials: sc.materials,
-    });
+    }, RENDERER_OPTS);
     r.setFloor({ enabled: true, y: 0, colorA: [0.22, 0.23, 0.27], colorB: [0.17, 0.18, 0.21] });
     occupancy = new OccupancyGrid(sc.size, sc.data);
     r.updateCoarse(occupancy.data);
@@ -442,7 +449,7 @@ async function main() {
       size: eff.size,
       data: eff.data,
       palette: eff.palette,
-    });
+    }, RENDERER_OPTS);
     r.setFloor({ enabled: true, y: 0, colorA: [0.22, 0.23, 0.27], colorB: [0.17, 0.18, 0.21] });
     r.setDebug(1); // transient voxels change every frame → skip coarse empty-space skipping
     r.setClipBounds([0, 0, 0], [eff.size.x - 1, eff.size.y - 1, eff.size.z - 1]);
@@ -522,7 +529,7 @@ async function main() {
         const first = rigPlayer.clips.includes(keep) ? keep : rigPlayer.clips.includes("walk") ? "walk" : rigPlayer.clips[0];
         clipSel.value = first;
         rigPlayer.setClip(first);
-        const r = await createRenderer(gpu!, { size: rigPlayer.size, data: rigPlayer.frame(0), palette: rigPlayer.palette, materials: entityToView(m.entity).materials });
+        const r = await createRenderer(gpu!, { size: rigPlayer.size, data: rigPlayer.frame(0), palette: rigPlayer.palette, materials: entityToView(m.entity).materials }, RENDERER_OPTS);
         r.setFloor({ enabled: true, y: 0, colorA: [0.22, 0.23, 0.27], colorB: [0.17, 0.18, 0.21] });
         // Frames move each tick, like an animated scene.
         r.setDebug(1);
@@ -682,6 +689,7 @@ async function main() {
         renderer.render({
           ...camera(orbit.yaw(), orbit.distance(), target, orbit.pitch()),
           ...ENV,
+          background: SKY,
         });
       }
     },
