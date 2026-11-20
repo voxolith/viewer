@@ -16,9 +16,9 @@ with [`@voxolith/renderer`](https://github.com/voxolith/renderer) (WebGPU).
 - Minecraft `.mca` regions load with crop controls
 - A Particles mode cycles the engine's explosion and muzzle-flash effects
 - A Generate mode builds any registered generator's model from its parameters and a seed, with
-  a share code; rigged ones play their clips. Its scale picker builds the same design at 100
-  voxels per metre (refined: single leaves, bark, bricks and tiles at real size), loaded brick by
-  brick since it is too large to hold densely
+  a share code; rigged ones play their clips. Its scale picker builds the same design finer, up
+  to 100 voxels per metre (refined: single leaves, bark, bricks and tiles at real size), loaded
+  brick by brick since it is too large to hold densely
 
 ## Requirements
 
@@ -28,7 +28,7 @@ with [`@voxolith/renderer`](https://github.com/voxolith/renderer) (WebGPU).
 ## Run
 
 ```sh
-bun install
+bun install          # from the workspace root, see below
 bun run dev
 ```
 
@@ -73,16 +73,18 @@ Headless bun scripts in `tools/`:
 
 ## Local development with the engine
 
-This repo depends on `@voxolith/renderer` as `workspace:*`. Clone it next to this one and run
-`bun install` from a workspace root that lists both folders, so the engine resolves to the local
-checkout. Once the engine is on npm, swap the dependency to a version range.
+This repo depends on `@voxolith/renderer`, `@voxolith/engine` and the generator packages
+(`voxolith/generators`) as `workspace:*`. Clone the three repos next to this one and run
+`bun install` from a workspace root that lists them (`generators/*` for the generators), so they
+resolve to the local checkouts. Once the engine is on npm, swap the dependency to a version range.
 
 ## Deploy
 
 Every push to `main` builds the app and publishes it to GitHub Pages at
 <https://voxolith.github.io/viewer/> via `.github/workflows/pages.yml`. The workflow checks out
-`voxolith/renderer` next to the app and builds with `BASE_PATH=/viewer/`, so asset and fetch URLs
-resolve under the project path. Run the same locally with `BASE_PATH=/viewer/ bun run build`.
+`voxolith/renderer`, `voxolith/engine` and `voxolith/generators` next to the app and builds with
+`BASE_PATH=/viewer/`, so asset and fetch URLs resolve under the project path. Run the same
+locally with `BASE_PATH=/viewer/ bun run build`.
 
 ## Theming
 

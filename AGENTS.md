@@ -3,7 +3,8 @@
 The Voxolith viewer at https://voxolith.github.io/viewer/. It opens MagicaVoxel `.vox` models
 (animated scenes play) and Minecraft `.mca` regions (with crop controls). A Particles mode cycles
 the engine's effects. A Generate mode builds any registered generator's model from parameters,
-a seed and a share code, at 10 or 100 voxels per metre; rigged models play their clips.
+a seed and a share code, at 10 voxels per metre or any finer scale the generator offers (20, 50,
+100); rigged models play their clips.
 
 ## Commands
 
@@ -18,8 +19,8 @@ Siblings needed: renderer, engine, generators.
 
 ## Map
 
-- `src/main.ts`: UI wiring, file drop, samples, quality.
-- `src/viewer.ts`: scene and camera.
+- `src/main.ts`: UI wiring, file drop, samples, quality, loading a model into the renderer.
+- `src/viewer.ts`: the view model (`toViewModel`) and camera framing.
 - `src/generate.ts`: the Generate mode (generator registry, ParamSpecs, share codes, the scale
   picker).
 - `src/rigged.ts`: clip playback.
@@ -27,8 +28,8 @@ Siblings needed: renderer, engine, generators.
 
 ## Notes
 
-- 100 voxels per metre models are sparse (8³ bricks, `model.sparse`). `src/viewer.ts` loads
-  them from their bricks; never make a dense copy of one.
+- Models finer than 10 voxels per metre are sparse (8³ bricks, `model.sparse`).
+  `src/main.ts` loads them from their bricks; never make a dense copy of one.
 - The generator registry is the engine's; a new generator shows up here by being registered, not
   by viewer code.
 
@@ -60,8 +61,10 @@ Siblings needed: renderer, engine, generators.
   depends on its siblings as `"workspace:*"`. Run `bun install` from that root, never inside a
   repo. [CONTRIBUTING](https://github.com/voxolith/.github/blob/main/CONTRIBUTING.md) lists
   which siblings each repo needs.
-- **Toolchain: bun only.** There is no npm or node step anywhere. It is TypeScript 7 and Vite 8;
-  scripts run `tsc`, `vite` and `bun tools/x.ts`. Use current dependency versions.
+- **Toolchain: bun.** Locally everything runs through bun. CI is different: GitHub's runners have
+  Node, so `bun run build` runs Vite on Node there, and `vite.config.ts` with everything it
+  imports must load under Node. It is TypeScript 7 and Vite 8; scripts run `tsc`, `vite` and
+  `bun tools/x.ts`. Use current dependency versions.
 - **`tsconfig.base.json` is byte-identical in every repo**, because consumers compile the
   renderer's and engine's sources under their own flags. Change it everywhere or nowhere.
 - **WebGPU, not WebGL.** Dev servers are HTTPS (`@vitejs/plugin-basic-ssl`), because WebGPU needs a
